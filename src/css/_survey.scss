@@ -3,10 +3,14 @@
     width: 100vw;
 }
 
-.item {
+.item-frame {
     width: 360px;
+}
+
+.item {
     background: $white;
     border-radius: 0.5rem;
+    z-index: 1;
 }
 
 .question {
@@ -19,4 +23,20 @@
 .switch {
     zoom: 0.45;
     transform: translateY(20%);
+}
+
+.endpoint {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: $primary-color-light;
+    margin: -13px auto;
+    z-index: -1;
+    position: relative;
+    text-align: center;
+    padding-top: 10px;
+    color: white;
+    &:hover {
+        background: $primary-color-dark;
+    }
 }

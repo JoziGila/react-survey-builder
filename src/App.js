@@ -17,7 +17,7 @@ class Survey extends Component {
           id: "q-1",
           priority: 1,
           type: "textbox",
-          question: "Do you drink milk?",
+          question: "",
           required: false
         }
       ]
@@ -57,7 +57,7 @@ class Question extends Component {
   }
 
   getValidationState() {
-    return 'success';
+    return null;
   }
 
   handleChange(e) {
@@ -123,7 +123,15 @@ class Item extends Component {
 
   render() {
     return (
-      <Draggable><div className='item'>{this.props.children}</div></Draggable>
+      <Draggable>
+        <div className='item-frame'>
+          <div className='item'>
+            {this.props.children}
+          </div>
+          <div className='endpoint'><span>+</span></div>
+        </div>
+
+      </Draggable>
     );
   }
 }
