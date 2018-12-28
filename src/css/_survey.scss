@@ -1,0 +1,22 @@
+.survey {
+    height: 100vh;
+    width: 100vw;
+}
+
+.item {
+    width: 360px;
+    background: $white;
+    border-radius: 0.5rem;
+}
+
+.question {
+    width: 100%;
+    .footer a {
+        font-size: 0.75rem;
+    }
+}
+
+.switch {
+    zoom: 0.45;
+    transform: translateY(20%);
+}

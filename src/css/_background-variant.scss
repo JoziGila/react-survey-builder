@@ -1,0 +1,23 @@
+.bg-grey-100 {
+  background: $grey-100;
+}
+
+.bg-grey-200 {
+  background: $grey-200;
+}
+
+.bg-primary { background: $primary-color !important; }
+.bg-secondary { background: $secondary-color !important; }
+
+.bg-success { background: $success-color !important; }
+.bg-success-extra-light {
+  background: rgba(0,182,51, 0.1);
+  color: $success-color;
+}
+.bg-danger { background: $danger-color-dark !important; }
+.bg-warning { background: $warning-color !important; }
+.bg-warning-extra-light {
+  background: rgba(250,109,9, 0.1);
+  color: $success-color;
+}
+.bg-info { background: $info-color !important; }
