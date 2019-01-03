@@ -20,9 +20,16 @@
     }
 }
 
-.switch {
-    zoom: 0.45;
-    transform: translateY(20%);
+.required {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    .switcho {
+        -ms-transform: scale(0.5, 0.5);
+        -webkit-transform: scale(0.5, 0.5);
+        transform: scale(0.5, 0.5);
+        margin: -4px -8px;
+    }
 }
 
 .endpoint {
@@ -34,9 +41,24 @@
     z-index: -1;
     position: relative;
     text-align: center;
-    padding-top: 10px;
-    color: white;
+    cursor: pointer;
     &:hover {
         background: $primary-color-dark;
     }
+    .plus {
+        color: $white;
+        position: absolute;
+        top: 9px;
+        left: 10.5px;
+    }
+}
+
+.symbol {
+    width: 16px;
+    height: 16px;
+    .check {
+        border: 1px solid $grey-400;
+        border-radius: 4px;
+    }
+    .radio {}
 }
