@@ -49,13 +49,18 @@ class Survey extends Component {
     this.setState({ questions: questionsCopy });
   }
 
-  optionAdd(questionId, option) {
-
+  optionAdd(questionId) {
+    let questionsCopy = [...this.state.questions];
+    let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
+    let lastOrder = Math.max(...questionsCopy[qIndex].options.map((a) => a.order));
+    questionsCopy[qIndex].options.push({ id: this._generateId('o'), order: lastOrder ? lastOrder + 1 : 1, content: '' });
+    this.setState({ questions: questionsCopy });
   }
 
   optionRemove(questionId, optionId) {
     let questionsCopy = [...this.state.questions];
     let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
+    if (questionsCopy[qIndex].options.length === 1) return;
     let oIndex = questionsCopy[qIndex].options.findIndex((o) => o.id === optionId);
     questionsCopy[qIndex].options.splice(oIndex, 1);
     this.setState({ questions: questionsCopy });
@@ -68,6 +73,10 @@ class Survey extends Component {
     let oIndex = questionsCopy[qIndex].options.findIndex((o) => o.id === e.target.id);
     questionsCopy[qIndex].options[oIndex].content = e.target.value;
     this.setState({ questions: questionsCopy });
+  }
+
+  _generateId(type) {
+    return type + '-' + crypto.getRandomValues(new Uint32Array(4)).join('');
   }
 
   render() {
@@ -163,8 +172,9 @@ class Question extends Component {
               op.type = this.props.type;
               return <OptionItem key={op.id} {...op} />
             })}
+            <div className='ml-16 add' onClick={() => this.props.optionAdd(this.props.id)}><span>+</span> Add Option</div>
           </Row>
-          <Row className='footer font_small'
+          <Row className='footer font_small mb-4'
             onMouseDown={(e) => { e.stopPropagation() }}
             onDrag={(e) => { e.stopPropagation() }}>
             <Col xs={6} md={6} sm={6} className=''><a href='#' className='text-danger font_small'>Delete</a></Col>

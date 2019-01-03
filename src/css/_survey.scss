@@ -53,43 +53,54 @@
     }
 }
 
-.option-item {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    .symbol {
-        width: 18px;
-        height: 18px;
-        border: 1px solid #CFD9E3;
-        &.check {
-            border-radius: 3px;
-        }
-        &.radio {
-            border-radius: 50%;
+.options {
+    .add {
+        font-size: 0.8rem;
+        color: $primary-color;
+        cursor: pointer;
+        span {
+            font-size: 1.2rem;
+            font-weight: 600;
         }
     }
-    .content {
+    .option-item {
         display: flex;
         flex-direction: row;
         flex-wrap: nowrap;
         align-items: center;
-        flex: 1;
-        border-bottom: 1px solid $grey-300;
-        input[type="text"] {
-            border: none;
-            box-shadow: none;
-            padding: 2px;
-        }
-        .text {
-            flex: 1;
-            border: none;
-        }
-        .delete {
+        .symbol {
             width: 18px;
             height: 18px;
-            text-align: center;
-            cursor: pointer;
+            border: 1px solid #CFD9E3;
+            &.check {
+                border-radius: 3px;
+            }
+            &.radio {
+                border-radius: 50%;
+            }
+        }
+        .content {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            align-items: center;
+            flex: 1;
+            border-bottom: 1px solid $grey-300;
+            input[type="text"] {
+                border: none;
+                box-shadow: none;
+                padding: 2px;
+            }
+            .text {
+                flex: 1;
+                border: none;
+            }
+            .delete {
+                width: 18px;
+                height: 18px;
+                text-align: center;
+                cursor: pointer;
+            }
         }
     }
 }
