@@ -19,10 +19,10 @@ class Survey extends Component {
         {
           id: "q-1",
           order: 1,
-          type: "check",
+          type: "radio",
           question: "",
           required: false,
-          options: [{ id: 1, order: 1, content: '' }]
+          options: [{ id: 'o-1', order: 1, content: '' }, { id: 'o-2', order: 2, content: '' }]
         }
       ]
     };
@@ -31,6 +31,7 @@ class Survey extends Component {
     this.questionSetRequired = this.questionSetRequired.bind(this);
     this.optionAdd = this.optionAdd.bind(this);
     this.optionRemove = this.optionRemove.bind(this);
+    this.optionChange = this.optionChange.bind(this);
   }
 
   questionChange(e) {
@@ -53,7 +54,20 @@ class Survey extends Component {
   }
 
   optionRemove(questionId, optionId) {
+    let questionsCopy = [...this.state.questions];
+    let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
+    let oIndex = questionsCopy[qIndex].options.findIndex((o) => o.id === optionId);
+    questionsCopy[qIndex].options.splice(oIndex, 1);
+    this.setState({ questions: questionsCopy });
+  }
 
+  optionChange(questionId, e) {
+    e.preventDefault();
+    let questionsCopy = [...this.state.questions];
+    let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
+    let oIndex = questionsCopy[qIndex].options.findIndex((o) => o.id === e.target.id);
+    questionsCopy[qIndex].options[oIndex].content = e.target.value;
+    this.setState({ questions: questionsCopy });
   }
 
   render() {
@@ -64,6 +78,7 @@ class Survey extends Component {
           item.questionSetRequired = this.questionSetRequired;
           item.optionAdd = this.optionAdd;
           item.optionRemove = this.optionRemove;
+          item.optionChange = this.optionChange;
 
           return <Question
             key={item.id}
@@ -79,23 +94,23 @@ class Survey extends Component {
 class OptionItem extends Component {
   render() {
     return (
-      <div className='option-item' id={this.key}>
-        <div className={'symbol ' + this.props.type} />
+      <div className='option-item ml-16 mr-16 mb-4' id={this.key}>
+        <div className={'symbol mr-8 ' + this.props.type} />
         <div className='content'>
           <FormGroup
             key={this.props.id}
-            controlId="optionText"
-            validationState={this.props.validationState}
+            controlId={this.props.id}
+            className='text mr-4 mb-0 '
           >
             <FormControl
               key={this.props.id}
               type="text"
               value={this.props.content}
               placeholder={"Option " + this.props.order}
-              onChange={this.props.handleChange}
+              onChange={(e) => this.props.optionChange(this.props.questionId, e)}
             />
           </FormGroup>
-          <div className='text-danger'>X</div>
+          <div onClick={() => this.props.optionRemove(this.props.questionId, this.props.id)} className='delete'>&#10006;</div>
         </div>
       </div>
     );
@@ -138,18 +153,27 @@ class Question extends Component {
               />
             </FormGroup>
           </Row>
-          <Row className='options'>
-            {/* this.props.options.map((op) => <OptionItem {...op} />) */}
+          <Row className='options'
+            onMouseDown={(e) => { e.stopPropagation() }}
+            onDrag={(e) => { e.stopPropagation() }}>
+            {this.props.options.map((op) => {
+              op.optionChange = this.props.optionChange;
+              op.optionRemove = this.props.optionRemove;
+              op.questionId = this.props.id;
+              op.type = this.props.type;
+              return <OptionItem key={op.id} {...op} />
+            })}
           </Row>
           <Row className='footer font_small'
             onMouseDown={(e) => { e.stopPropagation() }}
             onDrag={(e) => { e.stopPropagation() }}>
-            <Col xs={6} md={6} sm={6} className=''><a href='#' className='text-danger font-small'>Delete</a></Col>
+            <Col xs={6} md={6} sm={6} className=''><a href='#' className='text-danger font_small'>Delete</a></Col>
             <Col xs={6} md={6} sm={6} className='required'>
               <span>Required</span>
               <Switch
                 checked={this.props.required}
                 className="switcho"
+                onColor="#00A3FF"
                 onChange={checked => this.props.questionSetRequired(this.props.id, checked)}
               />
             </Col>
