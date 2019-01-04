@@ -5,7 +5,7 @@
 //
 // Color system
 //
-$white : #FFFFFF;
+$white: #FFFFFF;
 $grey-100: #F6F8FB;
 $grey-200: #E2E8EE;
 $grey-300: #CFD9E3;
@@ -13,7 +13,7 @@ $grey-400: #ADBDCC;
 $grey-500: #62717F;
 $grey-600: #37424F;
 $grey-700: #11171C;
-$black : #000000;
+$black: #000000;
 $primary-color: #00A3FF;
 $primary-color-light: #23AFFE;
 $primary-color-dark: #0090E0;
@@ -24,8 +24,8 @@ $success-color: #11C26D;
 $success-color-light: #12CF74;
 $success-color-dark: #10B364;
 $info-color: #0BB2D4;
-$info-color-light : #0CC3E8;
-$info-color-dark : #0AA1BF;
+$info-color-light: #0CC3E8;
+$info-color-dark: #0AA1BF;
 $warning-color: #FA6D09;
 ;
 $warning-color-light: #FE7C20;
@@ -36,13 +36,11 @@ $danger-color-dark: #E6353B;
 //
 // Fonts
 //
-$font-stack: 'IBM Plex Sans',
-Helvetica,
-sans-serif;
+$font-stack: 'IBM Plex Sans';
 $body-font-size: 0.875rem;
-$font-weight-light : 300 !default;
-$font-weight-normal : 400 !default;
-$font-weight-bold : 700 !default;
+$font-weight-light: 300 !default;
+$font-weight-normal: 400 !default;
+$font-weight-bold: 700 !default;
 //
 // Border Radius
 //
