@@ -14,7 +14,7 @@ export class Survey extends Component {
                 {
                     id: "q-1",
                     order: 1,
-                    type: "radio",
+                    type: "check",
                     question: "",
                     required: false,
                     options: [{ id: 'o-1', order: 1, content: '' }, { id: 'o-2', order: 2, content: '' }]
