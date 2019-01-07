@@ -3,12 +3,25 @@ import { Question } from './Survey';
 import OptionItem from './Extensions';
 
 export class TextboxQuestion extends Component {
+    static initialState() {
+        let base = Question.initialState();
+        base.type = 'textbox';
+        return base;
+    }
+
     render() {
         return <Question key={this.props.id} {...this.props} name={'Textbox Question'} />
     }
 }
 
 export class MultipleChoiceQuestion extends Component {
+    static initialState() {
+        let base = Question.initialState();
+        base.type = 'check';
+        base.options = [OptionItem.initialState()];
+        return base;
+    }
+
     render() {
         return (
             <Question key={this.props.id} {...this.props} name={'Multiple Choice Question'}>
@@ -26,6 +39,13 @@ export class MultipleChoiceQuestion extends Component {
 }
 
 export class SingleChoiceQuestion extends Component {
+    static initialState() {
+        let base = Question.initialState();
+        base.type = 'radio';
+        base.options = [{ id: 'o-1', order: 1, content: '' }];
+        return base;
+    }
+
     render() {
         return (
             <Question key={this.props.id} {...this.props} name={'Single Choice Question'}>
@@ -43,6 +63,12 @@ export class SingleChoiceQuestion extends Component {
 }
 
 export class CommentQuestion extends Component {
+    static initialState() {
+        let base = Question.initialState();
+        base.type = 'comment';
+        return base;
+    }
+
     render() {
         return <Question key={this.props.id} {...this.props} name={'Comment Question'} />
     }

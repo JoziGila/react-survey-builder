@@ -1,8 +1,17 @@
 import React, { Component } from "react";
 import { FormGroup, FormControl } from 'react-bootstrap';
+import Util from './Util';
 
 // Renders a single option either radio or checkbox
 class OptionItem extends Component {
+    static initialState() {
+        return {
+            id: Util.generateId('o'),
+            order: 1,
+            content: ''
+        }
+    }
+
     render() {
         return (
             <div className='option-item ml-16 mr-16 mb-4' id={this.key}>

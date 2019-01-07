@@ -3,8 +3,11 @@ import ReactDOM from 'react-dom';
 import { Grid, Row, Col, Clearfix, FormGroup, FormControl, ListGroup, ListGroupItem } from 'react-bootstrap';
 import Switch from 'react-ios-switch';
 import Draggable from 'react-draggable';
+import { ArcherContainer, ArcherElement } from 'react-archer';
 import { Types, TextboxQuestion, MultipleChoiceQuestion, SingleChoiceQuestion, CommentQuestion } from './QuestionTypes';
 import PopOverStickOnHover from './PopOverStickOnHover';
+import Util from './Util';
+import OptionItem from './Extensions'
 
 export class Survey extends Component {
     constructor(props) {
@@ -12,17 +15,7 @@ export class Survey extends Component {
 
         // TODO: Create a question data class as to have standard objects
         this.state = {
-            questions: [
-                {
-                    id: "q-1",
-                    order: 1,
-                    type: "check",
-                    question: "",
-                    required: false,
-                    options: [{ id: 'o-1', order: 1, content: '' }, { id: 'o-2', order: 2, content: '' }],
-                    position: {x: 25, y: 25}
-                }
-            ]
+            questions: [MultipleChoiceQuestion.initialState()]
         };
 
         // Bind the stuff
@@ -32,7 +25,8 @@ export class Survey extends Component {
         this.addOption = this.addOption.bind(this);
         this.addQuestion = this.addQuestion.bind(this);
         this.removeOption = this.removeOption.bind(this);
-        
+        this.handleDrag = this.handleDrag.bind(this);
+        this.removeQuestion = this.removeQuestion.bind(this);
     }
 
     // Handles the change event from the question boxes
@@ -58,17 +52,22 @@ export class Survey extends Component {
     // Handles the state of the required switch
     questionSetRequired(questionId, required) {
         let questionsCopy = [...this.state.questions];
-        let index = questionsCopy.findIndex((q) => q.id === questionId);
-        questionsCopy[index].required = required;
+        let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
+        questionsCopy[qIndex].required = required;
         this.setState({ questions: questionsCopy });
     }
 
     // Adds options ...duh
     addOption(questionId) {
+        // Get context also the highest option order so we can increment it
         let questionsCopy = [...this.state.questions];
         let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
         let lastOrder = Math.max(...questionsCopy[qIndex].options.map((a) => a.order));
-        questionsCopy[qIndex].options.push({ id: this._generateId('o'), order: lastOrder ? lastOrder + 1 : 1, content: '' });
+
+        let option = OptionItem.initialState();
+        option.order = lastOrder ? lastOrder + 1 : 1;
+
+        questionsCopy[qIndex].options.push(option);
         this.setState({ questions: questionsCopy });
     }
 
@@ -76,70 +75,105 @@ export class Survey extends Component {
     addQuestion(parentQuestionId, e) {
         // Get location and size of parent question also which option was clicked on the popup
         const boundingRect = ReactDOM.findDOMNode(this.refs[parentQuestionId]).getBoundingClientRect();
-        const option = e.target.id;
+        const optionSelected = e.target.id;
 
-        this.setState({questions: [...this.state.questions, 
-            {
-                id: this._generateId('q'),
-                order: this.state.questions.find((q) => q.id === parentQuestionId).order + 1,
-                type: "textbox",
-                question: "",
-                required: false,
-                position: {
-                    x: boundingRect.x,
-                    y: boundingRect.y + boundingRect.height + 60
-                } 
-                
-            }
-        ]});
+        // Create copy of question, add the question and change the link of the parent
+        let questionsCopy = [...this.state.questions];
+        let qIndex = questionsCopy.findIndex((q) => q.id === parentQuestionId);
+
+        let newQuestion = Types[optionSelected].initialState();
+        newQuestion.position = {
+            x: boundingRect.x,
+            y: boundingRect.y + boundingRect.height + 70
+        };
+        newQuestion.order = questionsCopy[qIndex].order + 1;
+        newQuestion.from = parentQuestionId;
+        questionsCopy.push(newQuestion);
+
+        questionsCopy[qIndex].to = newQuestion.id;
+
+
+        this.setState({ questions: questionsCopy });
     }
 
     removeOption(questionId, optionId) {
         let questionsCopy = [...this.state.questions];
         let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
         if (questionsCopy[qIndex].options.length === 1) return;
+
         let oIndex = questionsCopy[qIndex].options.findIndex((o) => o.id === optionId);
         questionsCopy[qIndex].options.splice(oIndex, 1);
         this.setState({ questions: questionsCopy });
     }
 
-    _generateId(type) {
-        // Type can either be 'q' or 'o'
-        return type + '-' + crypto.getRandomValues(new Uint32Array(4)).join('');
+    removeQuestion(questionId) {
+        let questionsCopy = [...this.state.questions];
+        let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
+        if (questionsCopy[qIndex].to) return;
+
+        let fromIndex = questionsCopy.findIndex((q) => q.id === questionsCopy[qIndex].from);
+        questionsCopy[fromIndex].to = undefined;
+        questionsCopy.splice(qIndex, 1);
+
+        this.setState({ questions: questionsCopy });
+    }
+
+    handleDrag(e, data) {
+        e.preventDefault();
+        let questionsCopy = [...this.state.questions];
+        let qIndex = questionsCopy.findIndex((q) => q.id === data.node.id);
+        questionsCopy[qIndex].position = {
+            x: data.x,
+            y: data.y
+        }
+        this.setState({ questions: questionsCopy });
     }
 
     render() {
         return (
-            <div className="survey bg-grey-200">
-                {this.state.questions.map(item => {
-                    // Adding the functions to the props
-                    item.questionChangeText = this.questionChangeText;
-                    item.questionSetRequired = this.questionSetRequired;
-                    item.addOption = this.addOption;
-                    item.removeOption = this.removeOption;
-                    item.optionChangeText = this.optionChangeText;
-                    item.addQuestion = this.addQuestion;
+            <ArcherContainer strokeColor='#ADBDCC' arrowThickness={5}>
+                <div className="survey bg-grey-200">
 
-                    // Resolve the class
-                    let ClassType = Types[item.type];
+                    {this.state.questions.map(item => {
+                        // Adding the functions to the props
+                        item.questionChangeText = this.questionChangeText;
+                        item.questionSetRequired = this.questionSetRequired;
+                        item.addOption = this.addOption;
+                        item.removeOption = this.removeOption;
+                        item.optionChangeText = this.optionChangeText;
+                        item.addQuestion = this.addQuestion;
+                        item.handleDrag = this.handleDrag;
+                        item.removeQuestion = this.removeQuestion;
 
-                    return <ClassType ref={item.id} key={item.id} {...item} />;
-                })}
-            </div>
+                        // Resolve the class
+                        let ClassType = Types[item.type];
+
+                        return <ClassType ref={item.id} key={item.id} {...item} />;
+                    })}
+                </div>
+            </ArcherContainer>
         );
     }
 }
 
 export class Question extends Component {
+    static initialState() {
+        return {
+            id: Util.generateId('q'),
+            question: "",
+            order: 1,
+            required: false,
+            position: { x: 25, y: 25 }
+        }
+    }
+
     render() {
         return (
             // Wrap with item which makes it cooler
-            <Item 
-                position={this.props.position}
+            <Item
                 key={this.props.id}
-                addQuestion={this.props.addQuestion}
-                id={this.props.id}
-                draggable={true}>
+                draggable={true}
+                {...this.props}>
                 <Grid className='question'>
                     <Row className='header mt-4 mb-4'>
                         <Clearfix visibleXsBlock visibleSmBlock visibleMdBlock visibleLgBlock>
@@ -172,7 +206,7 @@ export class Question extends Component {
                     <Row className='footer font_small mb-4'
                         onMouseDown={(e) => { e.stopPropagation() }}
                         onDrag={(e) => { e.stopPropagation() }}>
-                        <Col xs={6} md={6} sm={6} className=''><a href='#' className='text-danger font_small'>Delete</a></Col>
+                        <Col xs={6} md={6} sm={6} className=''><a onClick={() => this.props.removeQuestion(this.props.id)} className='text-danger font_small'>Delete</a></Col>
                         <Col xs={6} md={6} sm={6} className='required'>
                             <span>Required</span>
                             <Switch
@@ -192,13 +226,17 @@ export class Question extends Component {
 // Makes things draggable and adds endpoints
 export class Item extends Component {
     _makeDraggable(component) {
-        const pos = this.props.position;
         return (
-            <Draggable defaultPosition={{x: pos.x, y: pos.y}}>
+            <Draggable
+                onDrag={this.props.handleDrag}
+                onStart={this.props.handleDrag}
+                onStop={this.props.handleDrag}
+                defaultPosition={{ x: this.props.position.x, y: this.props.position.y }}>
                 {component}
             </Draggable>
         );
     }
+
 
     render() {
         const popover = (
@@ -209,15 +247,37 @@ export class Item extends Component {
             </ListGroup>
         );
 
+        // Refactor endpoints in a separate component, too heavy
+        var endpointIn = (
+            <ArcherElement id={this.props.id + '-in'}>
+                {this.props.order !== 1 && <div id={this.props.id + '-in'} className={'endpoint in ' + (this.props.from && 'connected')} />}
+            </ArcherElement>
+        );
+
+        var endpointOut = (
+            <PopOverStickOnHover placement="bottom" component={popover}>
+                <div id={this.props.id + '-out'} to={this.props.to} className={'endpoint out ' + (this.props.to && 'connected')}>
+                    <ArcherElement
+                        id={this.props.id + '-out'}
+                        relations={this.props.to && [{
+                            targetId: this.props.to + '-in',
+                            targetAnchor: 'top',
+                            sourceAnchor: 'bottom',
+                        }]}>
+
+                        {!this.props.to && <div className='plus'>+</div>}
+                    </ArcherElement>
+                </div>
+            </PopOverStickOnHover >
+        );
+
         const frame = (
-            <div className='item-frame'>
-                <div className='endpoint in'/>
+            <div id={this.props.id} className='item-frame'>
+                {endpointIn}
                 <div className='item'>
                     {this.props.children}
                 </div>
-                <PopOverStickOnHover placement="bottom" component={popover}>
-                    <div className='endpoint'><div className='plus'>+</div></div>
-                </PopOverStickOnHover>
+                {endpointOut}
             </div>
         );
 
