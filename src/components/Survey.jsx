@@ -72,27 +72,46 @@ export class Survey extends Component {
     }
 
     // Creates a question linked to the parent
-    addQuestion(parentQuestionId, e) {
+    addQuestion(parentId, optionId, originEndpointId, e) {
         // Get location and size of parent question also which option was clicked on the popup
-        const boundingRect = ReactDOM.findDOMNode(this.refs[parentQuestionId]).getBoundingClientRect();
-        const optionSelected = e.target.id;
+        const boundingRect = ReactDOM.findDOMNode(this.refs[parentId]).getBoundingClientRect();
+        const typeOfQuestion = e.target.id;
 
         // Create copy of question, add the question and change the link of the parent
         let questionsCopy = [...this.state.questions];
-        let qIndex = questionsCopy.findIndex((q) => q.id === parentQuestionId);
+        let newQuestion = Types[typeOfQuestion].initialState();
+        newQuestion.type = typeOfQuestion;
 
-        let newQuestion = Types[optionSelected].initialState();
-        newQuestion.position = {
-            x: boundingRect.x,
-            y: boundingRect.y + boundingRect.height + 70
-        };
-        newQuestion.order = questionsCopy[qIndex].order + 1;
-        newQuestion.from = parentQuestionId;
-        questionsCopy.push(newQuestion);
+        // Switch statement for option or question TODO
+        if (optionId) {
 
-        questionsCopy[qIndex].to = newQuestion.id;
+        } else {
+            // Set position 70 px lower that the parent question
+            newQuestion.position = {
+                x: boundingRect.x,
+                y: boundingRect.y + boundingRect.height + 70
+            };
+            newQuestion.order = questionsCopy[qIndex].order + 1;
+            newQuestion.from = parentId;
 
+            // Create endpoint at the top which indicates that its a child
+            let rootEndpoint = Endpoint.initialState(
+                 'top',
+                 null,
+                 originEndpointId
+            );
+            newQuestion.endpoints = [...newQuestion.endpoints, rootEndpoint];
 
+            // Set pointer to child on parent
+            let qIndex = questionsCopy.findIndex((q) => q.id === parentId);
+            questionsCopy[qIndex].to = newQuestion.id;
+
+            // Set target of origin endpoint
+            let eIndex = questionsCopy[qIndex].endpoints.findIndex(o => o.id === originEndpointId);
+            questionsCopy[qIndex].endpoints[eIndex].target = rootEndpoint.id;
+        }
+
+        questionsCopy.push(newQuestion)
         this.setState({ questions: questionsCopy });
     }
 
@@ -163,7 +182,8 @@ export class Question extends Component {
             question: "",
             order: 1,
             required: false,
-            position: { x: 25, y: 25 }
+            position: { x: 25, y: 25 },
+            endpoints: [{id: Util.generateId('e'), position: 'bottom', target: null} ]
         }
     }
 
@@ -239,45 +259,14 @@ export class Item extends Component {
 
 
     render() {
-        const popover = (
-            <ListGroup>
-                {Object.keys(Types).map((key) => {
-                    return <ListGroupItem key={key} id={key} onClick={(e) => this.props.addQuestion(this.props.id, e)}>{key}</ListGroupItem>
-                })}
-            </ListGroup>
-        );
-
-        // Refactor endpoints in a separate component, too heavy
-        var endpointIn = (
-            <ArcherElement id={this.props.id + '-in'}>
-                {this.props.order !== 1 && <div id={this.props.id + '-in'} className={'endpoint in ' + (this.props.from && 'connected')} />}
-            </ArcherElement>
-        );
-
-        var endpointOut = (
-            <PopOverStickOnHover placement="bottom" component={popover}>
-                <div id={this.props.id + '-out'} to={this.props.to} className={'endpoint out ' + (this.props.to && 'connected')}>
-                    <ArcherElement
-                        id={this.props.id + '-out'}
-                        relations={this.props.to && [{
-                            targetId: this.props.to + '-in',
-                            targetAnchor: 'top',
-                            sourceAnchor: 'bottom',
-                        }]}>
-
-                        {!this.props.to && <div className='plus'>+</div>}
-                    </ArcherElement>
-                </div>
-            </PopOverStickOnHover >
-        );
-
-        const frame = (
+        let frame = (
             <div id={this.props.id} className='item-frame'>
-                {endpointIn}
                 <div className='item'>
                     {this.props.children}
+                    {this.props.endpoints.map(e => {
+                        return <Endpoint {...e} />
+                    })}
                 </div>
-                {endpointOut}
             </div>
         );
 
@@ -287,4 +276,59 @@ export class Item extends Component {
     }
 }
 
+class Endpoint extends React.Component {
+    static initialState(position, target, from) {
+        return {id: Util.generateId('e'), position: position, target: target, from: from}
+    }
+
+    _makePoppapable(component) {
+        const popover = (
+            // Popover content with the list of question types
+            <ListGroup>
+                {Object.keys(Types).map((key) => {
+                    return (
+                        <ListGroupItem key={key} id={key} 
+                            onClick={(e) => this.props.addQuestion(this.props.questionId, this.props.optionId, e)}>
+                            {key}
+                        </ListGroupItem>
+                    );
+                })}
+            </ListGroup>
+        );
+
+        return (
+            <PopOverStickOnHover placement={this.props.position} component={popover}>
+                {component}
+            </PopOverStickOnHover>
+        );
+    }
+
+    _generateClasses() {
+        let endpoint = this.props;
+        let classes = 'endpoint ';
+        classes += endpoint.position + ' ';
+
+        // If it has a target it means that its busy
+        classes += endpoint.from ? 'busy ' : (endpoint.target ? 'busy ' : 'free ');
+    }
+
+    render() {
+        let endpoint = (
+            <div 
+                id={this.props.id} 
+                className={this._generateClasses()}>
+            <ArcherElement
+                id={this.props.id}
+                >
+
+                <div className='plus'>+</div>
+            </ArcherElement>
+            </div>
+        );
+
+        return (
+           this._makePoppapable(endpoint)
+        );
+    }
+}
 export default Survey;

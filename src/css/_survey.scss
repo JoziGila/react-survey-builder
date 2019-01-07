@@ -42,26 +42,52 @@ a {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: $primary-color-light;
-    margin: -14px auto;
+    // 
     z-index: -1;
-    position: relative;
+    position: absolute;
     text-align: center;
     cursor: pointer;
-    &:hover {
-        background: $primary-color-dark;
-    }
-    .plus {
-        color: $white;
-        position: absolute;
-        top: 9px;
-        left: 10.5px;
-    }
-    &.in {
-        margin: -16px auto;
-    }
-    &.connected {
+
+    &.busy {
         background: $grey-400;
+        .plus {
+            display: none;
+        }
+    }
+
+    &.free {
+        background: $primary-color-light;
+        &:hover {
+            background: $primary-color-dark;
+        }
+        .plus {
+            color: $white;
+            position: absolute;
+            top: 9px;
+            left: 10.5px;
+        }
+    }
+
+    &.bottom {
+        left: 180px - 15px;
+        margin-top: -13px;
+    }
+
+    &.top {
+        left: 180px - 15px;
+        top: -13px;
+    }
+
+    &.right {
+        right: -15px;
+        top: 50%;
+        transform: translateY(-50%) rotate(-90deg);
+    }
+
+    &.left {
+        left: -15px;
+        top: 50%;
+        transform: translateY(-50%) rotate(90deg);
     }
 }
 
