@@ -13,12 +13,13 @@ export class MultipleChoiceQuestion extends Component {
         return (
             <Question key={this.props.id} {...this.props} name={'Multiple Choice Question'}>
                 {this.props.options.map((op) => {
-                    op.optionChange = this.props.optionChange;
-                    op.optionRemove = this.props.optionRemove;
+                    op.optionChangeText = this.props.optionChangeText;
+                    op.removeOption = this.props.removeOption;
                     op.questionId = this.props.id;
                     op.type = this.props.type;
                     return <OptionItem key={op.id} {...op} />
                 })}
+                <div className='ml-16 add' onClick={() => this.props.addOption(this.props.id)}><span>+</span> Add Option</div>
             </Question>
         )
     };
@@ -29,12 +30,13 @@ export class SingleChoiceQuestion extends Component {
         return (
             <Question key={this.props.id} {...this.props} name={'Single Choice Question'}>
                 {this.props.options.map((op) => {
-                    op.optionChange = this.props.optionChange;
-                    op.optionRemove = this.props.optionRemove;
+                    op.optionChangeText = this.props.optionChangeText;
+                    op.removeOption = this.props.removeOption;
                     op.questionId = this.props.id;
                     op.type = this.props.type;
                     return <OptionItem key={op.id} {...op} />
                 })}
+                <div className='ml-16 add' onClick={() => this.props.addOption(this.props.id)}><span>+</span> Add Option</div>
             </Question>
         )
     }

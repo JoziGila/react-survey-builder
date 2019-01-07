@@ -1,8 +1,10 @@
 import React, { Component } from "react";
-import { Grid, Row, Col, Clearfix, FormGroup, FormControl } from 'react-bootstrap';
+import ReactDOM from 'react-dom';
+import { Grid, Row, Col, Clearfix, FormGroup, FormControl, ListGroup, ListGroupItem } from 'react-bootstrap';
 import Switch from 'react-ios-switch';
 import Draggable from 'react-draggable';
 import { Types, TextboxQuestion, MultipleChoiceQuestion, SingleChoiceQuestion, CommentQuestion } from './QuestionTypes';
+import PopOverStickOnHover from './PopOverStickOnHover';
 
 export class Survey extends Component {
     constructor(props) {
@@ -17,22 +19,25 @@ export class Survey extends Component {
                     type: "check",
                     question: "",
                     required: false,
-                    options: [{ id: 'o-1', order: 1, content: '' }, { id: 'o-2', order: 2, content: '' }]
+                    options: [{ id: 'o-1', order: 1, content: '' }, { id: 'o-2', order: 2, content: '' }],
+                    position: {x: 25, y: 25}
                 }
             ]
         };
 
         // Bind the stuff
-        this.questionChange = this.questionChange.bind(this);
+        this.questionChangeText = this.questionChangeText.bind(this);
+        this.optionChangeText = this.optionChangeText.bind(this);
         this.questionSetRequired = this.questionSetRequired.bind(this);
-        this.optionAdd = this.optionAdd.bind(this);
-        this.optionRemove = this.optionRemove.bind(this);
-        this.optionChange = this.optionChange.bind(this);
+        this.addOption = this.addOption.bind(this);
+        this.addQuestion = this.addQuestion.bind(this);
+        this.removeOption = this.removeOption.bind(this);
+        
     }
 
     // Handles the change event from the question boxes
     // Refactor this to not use events but only the parameters it needs??
-    questionChange(e) {
+    questionChangeText(e) {
         e.preventDefault();
         let questionsCopy = [...this.state.questions];
         let index = questionsCopy.findIndex((q) => q.id === e.target.id);
@@ -40,7 +45,8 @@ export class Survey extends Component {
         this.setState({ questions: questionsCopy });
     }
 
-    optionChange(questionId, e) {
+    // Handles change event from the option boxes
+    optionChangeText(questionId, e) {
         e.preventDefault();
         let questionsCopy = [...this.state.questions];
         let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
@@ -49,7 +55,7 @@ export class Survey extends Component {
         this.setState({ questions: questionsCopy });
     }
 
-    // Handles the state of the required toggle
+    // Handles the state of the required switch
     questionSetRequired(questionId, required) {
         let questionsCopy = [...this.state.questions];
         let index = questionsCopy.findIndex((q) => q.id === questionId);
@@ -58,7 +64,7 @@ export class Survey extends Component {
     }
 
     // Adds options ...duh
-    optionAdd(questionId) {
+    addOption(questionId) {
         let questionsCopy = [...this.state.questions];
         let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
         let lastOrder = Math.max(...questionsCopy[qIndex].options.map((a) => a.order));
@@ -66,7 +72,29 @@ export class Survey extends Component {
         this.setState({ questions: questionsCopy });
     }
 
-    optionRemove(questionId, optionId) {
+    // Creates a question linked to the parent
+    addQuestion(parentQuestionId, e) {
+        // Get location and size of parent question also which option was clicked on the popup
+        const boundingRect = ReactDOM.findDOMNode(this.refs[parentQuestionId]).getBoundingClientRect();
+        const option = e.target.id;
+
+        this.setState({questions: [...this.state.questions, 
+            {
+                id: this._generateId('q'),
+                order: this.state.questions.find((q) => q.id === parentQuestionId).order + 1,
+                type: "textbox",
+                question: "",
+                required: false,
+                position: {
+                    x: boundingRect.x,
+                    y: boundingRect.y + boundingRect.height + 60
+                } 
+                
+            }
+        ]});
+    }
+
+    removeOption(questionId, optionId) {
         let questionsCopy = [...this.state.questions];
         let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
         if (questionsCopy[qIndex].options.length === 1) return;
@@ -82,19 +110,20 @@ export class Survey extends Component {
 
     render() {
         return (
-            <div className="survey bg-grey-200 p-24">
+            <div className="survey bg-grey-200">
                 {this.state.questions.map(item => {
                     // Adding the functions to the props
-                    item.questionChange = this.questionChange;
+                    item.questionChangeText = this.questionChangeText;
                     item.questionSetRequired = this.questionSetRequired;
-                    item.optionAdd = this.optionAdd;
-                    item.optionRemove = this.optionRemove;
-                    item.optionChange = this.optionChange;
+                    item.addOption = this.addOption;
+                    item.removeOption = this.removeOption;
+                    item.optionChangeText = this.optionChangeText;
+                    item.addQuestion = this.addQuestion;
 
                     // Resolve the class
                     let ClassType = Types[item.type];
 
-                    return <ClassType key={item.id} {...item} />;
+                    return <ClassType ref={item.id} key={item.id} {...item} />;
                 })}
             </div>
         );
@@ -105,7 +134,12 @@ export class Question extends Component {
     render() {
         return (
             // Wrap with item which makes it cooler
-            <Item id={this.props.id} draggable={true}>
+            <Item 
+                position={this.props.position}
+                key={this.props.id}
+                addQuestion={this.props.addQuestion}
+                id={this.props.id}
+                draggable={true}>
                 <Grid className='question'>
                     <Row className='header mt-4 mb-4'>
                         <Clearfix visibleXsBlock visibleSmBlock visibleMdBlock visibleLgBlock>
@@ -126,17 +160,14 @@ export class Question extends Component {
                                 type="text"
                                 value={this.props.question}
                                 placeholder="Enter question"
-                                onChange={this.props.questionChange}
+                                onChange={this.props.questionChangeText}
                             />
                         </FormGroup>
                     </Row>
                     <Row className='extensions'
                         onMouseDown={(e) => { e.stopPropagation() }}
                         onDrag={(e) => { e.stopPropagation() }}>
-
                         {this.props.children}
-
-                        <div className='ml-16 add' onClick={() => this.props.optionAdd(this.props.id)}><span>+</span> Add Option</div>
                     </Row>
                     <Row className='footer font_small mb-4'
                         onMouseDown={(e) => { e.stopPropagation() }}
@@ -161,20 +192,32 @@ export class Question extends Component {
 // Makes things draggable and adds endpoints
 export class Item extends Component {
     _makeDraggable(component) {
+        const pos = this.props.position;
         return (
-            <Draggable>
+            <Draggable defaultPosition={{x: pos.x, y: pos.y}}>
                 {component}
             </Draggable>
         );
     }
 
     render() {
-        let frame = (
+        const popover = (
+            <ListGroup>
+                {Object.keys(Types).map((key) => {
+                    return <ListGroupItem key={key} id={key} onClick={(e) => this.props.addQuestion(this.props.id, e)}>{key}</ListGroupItem>
+                })}
+            </ListGroup>
+        );
+
+        const frame = (
             <div className='item-frame'>
+                <div className='endpoint in'/>
                 <div className='item'>
                     {this.props.children}
                 </div>
-                <div className='endpoint'><div className='plus'>+</div></div>
+                <PopOverStickOnHover placement="bottom" component={popover}>
+                    <div className='endpoint'><div className='plus'>+</div></div>
+                </PopOverStickOnHover>
             </div>
         );
 

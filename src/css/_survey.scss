@@ -5,6 +5,7 @@
 
 .item-frame {
     width: 360px;
+    position: absolute;
 }
 
 .item {
@@ -37,7 +38,7 @@
     height: 30px;
     border-radius: 50%;
     background: $primary-color-light;
-    margin: -13px auto;
+    margin: -14px auto;
     z-index: -1;
     position: relative;
     text-align: center;
@@ -50,6 +51,10 @@
         position: absolute;
         top: 9px;
         left: 10.5px;
+    }
+    &.in {
+        background: $grey-400;
+        margin: -16px auto;
     }
 }
 
@@ -102,5 +107,15 @@
                 cursor: pointer;
             }
         }
+    }
+}
+
+.popover-content {
+    padding: 0 !important;
+    a {
+        font-size: $body-font-size  !important;
+    }
+    .list-group {
+        margin: 0 !important;
     }
 }

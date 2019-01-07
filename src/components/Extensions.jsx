@@ -18,10 +18,10 @@ class OptionItem extends Component {
                             type="text"
                             value={this.props.content}
                             placeholder={"Option " + this.props.order}
-                            onChange={(e) => this.props.optionChange(this.props.questionId, e)}
+                            onChange={(e) => this.props.optionChangeText(this.props.questionId, e)}
                         />
                     </FormGroup>
-                    <div onClick={() => this.props.optionRemove(this.props.questionId, this.props.id)} className='delete'>&#10006;</div>
+                    <div onClick={() => this.props.removeOption(this.props.questionId, this.props.id)} className='delete'>&#10006;</div>
                 </div>
             </div>
         );
