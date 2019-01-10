@@ -82,28 +82,52 @@ export class Survey extends Component {
         let newQuestion = Types[typeOfQuestion].initialState();
         newQuestion.type = typeOfQuestion;
 
+        let qIndex = questionsCopy.findIndex((q) => q.id === parentId);
+        newQuestion.order = questionsCopy[qIndex].order + 1;
+
         // Switch statement for option or question TODO
-        if (optionId) {
+        if (optionId !== null) {
+            newQuestion.position = {
+                x: boundingRect.x + boundingRect.width + 70,
+                y: boundingRect.y
+            };
+
+            newQuestion.from = optionId;
+
+            // Create endpoint at the top which indicates that its a child
+            let rootEndpoint = Endpoint.initialState(
+                'left',
+                null,
+                originEndpointId
+            );
+            newQuestion.endpoints = [...newQuestion.endpoints, rootEndpoint];
+
+            // Set pointer to child on parent option
+            let oIndex = questionsCopy[qIndex].options.findIndex(o => o.id === optionId);
+            questionsCopy[qIndex].options[oIndex].to = newQuestion.id;
+
+            // Set target of origin endpoint
+            let eIndex = questionsCopy[qIndex].options[oIndex].endpoints.findIndex(o => o.id === originEndpointId);
+            questionsCopy[qIndex].options[oIndex].endpoints[eIndex].target = rootEndpoint.id;
 
         } else {
+
             // Set position 70 px lower that the parent question
             newQuestion.position = {
                 x: boundingRect.x,
                 y: boundingRect.y + boundingRect.height + 70
             };
-            newQuestion.order = questionsCopy[qIndex].order + 1;
             newQuestion.from = parentId;
 
             // Create endpoint at the top which indicates that its a child
             let rootEndpoint = Endpoint.initialState(
-                 'top',
-                 null,
-                 originEndpointId
+                'top',
+                null,
+                originEndpointId
             );
             newQuestion.endpoints = [...newQuestion.endpoints, rootEndpoint];
 
             // Set pointer to child on parent
-            let qIndex = questionsCopy.findIndex((q) => q.id === parentId);
             questionsCopy[qIndex].to = newQuestion.id;
 
             // Set target of origin endpoint
@@ -128,13 +152,37 @@ export class Survey extends Component {
     removeQuestion(questionId) {
         let questionsCopy = [...this.state.questions];
         let qIndex = questionsCopy.findIndex((q) => q.id === questionId);
-        if (questionsCopy[qIndex].to) return;
+        if (this._hasConnections(questionsCopy[qIndex])) return;
 
-        let fromIndex = questionsCopy.findIndex((q) => q.id === questionsCopy[qIndex].from);
-        questionsCopy[fromIndex].to = undefined;
+        // Find parent endpoint
+        let fromId = questionsCopy[qIndex].from;
+        let fromEndpointIndex = questionsCopy[qIndex].endpoints.find(e => e.from).from;
+
+        if (questionsCopy[qIndex].from[0] === 'q') {
+            // Remove pointer from parent question
+            let parentQuestionIndex = questionsCopy.findIndex((q) => q.id === fromId);
+            questionsCopy[parentQuestionIndex].to = null;
+
+            // Remove endpoint
+            let eIndex = questionsCopy[parentQuestionIndex].endpoints.findIndex(e => e.id === fromEndpointIndex);
+            questionsCopy[parentQuestionIndex].endpoints[eIndex].target = null;
+        } else {
+            // Remove pointer from parent option
+            let parentQuestionIndex = questionsCopy.findIndex(q => q.options.some(function (o) { return o.id === fromId }));
+            let parentOptionIndex = questionsCopy[parentQuestionIndex].options.findIndex(o => o.id === fromId);
+            questionsCopy[parentQuestionIndex].options[parentOptionIndex].to = null;
+
+            // Remove endpoint reference
+            let eIndex = questionsCopy[parentQuestionIndex].options[parentOptionIndex].endpoints.findIndex(e => e.id === fromEndpointIndex);
+            questionsCopy[parentQuestionIndex].options[parentOptionIndex].endpoints[eIndex].target = null;
+        }
+
         questionsCopy.splice(qIndex, 1);
-
         this.setState({ questions: questionsCopy });
+    }
+
+    _hasConnections(question) {
+        return this.state.questions.length === 1 || question.to !== undefined || (question.options !== 'undefined' ? question.options.some(o => o.to) : false);
     }
 
     handleDrag(e, data) {
@@ -183,7 +231,7 @@ export class Question extends Component {
             order: 1,
             required: false,
             position: { x: 25, y: 25 },
-            endpoints: [{id: Util.generateId('e'), position: 'bottom', target: null} ]
+            endpoints: [{ id: Util.generateId('e'), position: 'bottom', target: null }]
         }
     }
 
@@ -257,6 +305,25 @@ export class Item extends Component {
         );
     }
 
+    // We need these to make the addQuestion on the endpoint work
+    _getEndpointContainerIds() {
+        // If id starts with 'q' then its a question endpoint
+        // That means that the question id is the id in the props
+        // When its an option we need to get it from the supplemented 'questionId'
+        let props = this.props;
+        if (props.id[0] === 'q') {
+            return {
+                questionId: props.id,
+                optionId: null
+            }
+        } else {
+            return {
+                questionId: props.questionId,
+                optionId: props.id
+            }
+        }
+    }
+
 
     render() {
         let frame = (
@@ -264,7 +331,8 @@ export class Item extends Component {
                 <div className='item'>
                     {this.props.children}
                     {this.props.endpoints.map(e => {
-                        return <Endpoint {...e} />
+                        e.addQuestion = this.props.addQuestion;
+                        return <Endpoint key={e.id} {...e} ids={this._getEndpointContainerIds()} />
                     })}
                 </div>
             </div>
@@ -276,9 +344,9 @@ export class Item extends Component {
     }
 }
 
-class Endpoint extends React.Component {
+export class Endpoint extends React.Component {
     static initialState(position, target, from) {
-        return {id: Util.generateId('e'), position: position, target: target, from: from}
+        return { id: Util.generateId('e'), position: position, target: target, from: from }
     }
 
     _makePoppapable(component) {
@@ -287,8 +355,14 @@ class Endpoint extends React.Component {
             <ListGroup>
                 {Object.keys(Types).map((key) => {
                     return (
-                        <ListGroupItem key={key} id={key} 
-                            onClick={(e) => this.props.addQuestion(this.props.questionId, this.props.optionId, e)}>
+                        <ListGroupItem key={key} id={key}
+                            onClick={(e) =>
+                                this.props.addQuestion(
+                                    this.props.ids.questionId,
+                                    this.props.ids.optionId,
+                                    this.props.id,
+                                    e
+                                )}>
                             {key}
                         </ListGroupItem>
                     );
@@ -310,24 +384,28 @@ class Endpoint extends React.Component {
 
         // If it has a target it means that its busy
         classes += endpoint.from ? 'busy ' : (endpoint.target ? 'busy ' : 'free ');
+        return classes;
+    }
+
+    _generateRelationProps() {
+        return this.props.target !== null && {
+            targetId: this.props.target,
+            targetAnchor: this.props.position === 'bottom' ? 'top' : 'left',
+            sourceAnchor: this.props.position
+        };
     }
 
     render() {
         let endpoint = (
-            <div 
-                id={this.props.id} 
-                className={this._generateClasses()}>
-            <ArcherElement
-                id={this.props.id}
-                >
-
-                <div className='plus'>+</div>
-            </ArcherElement>
+            <div id={this.props.id} className={this._generateClasses()}>
+                <ArcherElement id={this.props.id} relations={[this._generateRelationProps()]}>
+                    <div className='plus'>+</div>
+                </ArcherElement>
             </div>
         );
 
         return (
-           this._makePoppapable(endpoint)
+            this._makePoppapable(endpoint)
         );
     }
 }

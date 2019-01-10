@@ -41,20 +41,18 @@ a {
 .endpoint {
     width: 30px;
     height: 30px;
-    border-radius: 50%;
-    // 
+    border-radius: 50%; // 
     z-index: -1;
     position: absolute;
     text-align: center;
     cursor: pointer;
-
+    display: grid;
     &.busy {
         background: $grey-400;
         .plus {
             display: none;
         }
     }
-
     &.free {
         background: $primary-color-light;
         &:hover {
@@ -67,23 +65,19 @@ a {
             left: 10.5px;
         }
     }
-
     &.bottom {
         left: 180px - 15px;
         margin-top: -13px;
     }
-
     &.top {
         left: 180px - 15px;
         top: -13px;
     }
-
     &.right {
-        right: -15px;
+        right: -16px;
         top: 50%;
         transform: translateY(-50%) rotate(-90deg);
     }
-
     &.left {
         left: -15px;
         top: 50%;
@@ -100,6 +94,9 @@ a {
             font-size: 1.2rem;
             font-weight: 600;
         }
+    }
+    .item-frame {
+        position: relative;
     }
     .option-item {
         display: flex;
